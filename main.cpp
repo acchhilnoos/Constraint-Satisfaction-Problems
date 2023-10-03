@@ -121,4 +121,6 @@ int main(int argc, char const *argv[])
         }
     }
     cout << failures << " failures." << endl;
+
+    delete queue;
 }
