@@ -51,10 +51,6 @@ bool satisfiesConstraints(long int state) {
         case 4:
             result = result && d!=c;
             break;
-        case 3:
-        case 2:
-        case 1:
-        case 0:
         default:
             return true;
     }
