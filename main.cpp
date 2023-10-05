@@ -92,6 +92,7 @@ int main(int argc, char const *argv[])
      */
     // Number of failing branches.
     int failures = 0;
+    int prunes   = 0;
     // Current search path.
     long int* queue = new long int[8];
     // Initialize search path.
@@ -102,16 +103,20 @@ int main(int argc, char const *argv[])
     // has backtracked past the root node and is complete.
     while (currIndex >= 0) {
         long int currState = *(queue+currIndex);
-        printState(currState, false, false);
+        /*
+         * Note: change this printState call to
+         * (..., 0, 0) for the full search tree
+         * (..., 1, 1) for solutions only
+         * (..., 0, 1) for worlds only (all variables assigned)
+         * (..., 1, 0) for passing states only (do not violate constraints)
+         */
+        printState(currState, 1, 1);
         // Deepens the search if it is not already at max depth 
         // and the current state does not violate constraints.
-        if (satisfiesConstraints(currState)) {
-            if (currIndex < 7) {
-                currIndex++;
-            }
-        } else {
-            failures++;
-        }
+        currIndex += int( satisfiesConstraints(currState) &&   currIndex < 7);
+        failures  += int(!satisfiesConstraints(currState) && !(currIndex < 7));
+        prunes    += int(!satisfiesConstraints(currState) &&   currIndex < 7);
+
         *(queue+currIndex) = successorFunction(currState, currIndex);
         // Prevents variables from exceeding 4 (domain {1, 2, 3, 4}).
         while (indexOfFive(*(queue+currIndex))!=-1) {
@@ -120,7 +125,8 @@ int main(int argc, char const *argv[])
             *(queue+currIndex) = successorFunction(currState, currIndex);
         }
     }
-    cout << failures << " failures." << endl;
+    cout << failures << " failing worlds found, " << prunes << " branches pruned (" << failures+prunes << " failures)"
+         << "\n\tof " << pow(4,8) << " possible states." << endl;
 
     delete[] queue;
 }
