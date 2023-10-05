@@ -102,7 +102,7 @@ int main(int argc, char const *argv[])
     // has backtracked past the root node and is complete.
     while (currIndex >= 0) {
         long int currState = *(queue+currIndex);
-        printState(currState, int(*argv[1])-48, int(*argv[2])-48);
+        printState(currState, true, true;
         // Deepens the search if it is not already at max depth 
         // and the current state does not violate constraints.
         if (satisfiesConstraints(currState)) {
