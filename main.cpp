@@ -27,29 +27,35 @@ int indexOfFive(long int state) {
 
 /*
  * Returns true if all constraints are satisfied.
+ * Use alternative definitions for search with and without
+ * degree heuristics.
  */
 bool satisfiesConstraints(long int state) {
-    int a =  state      & 7;
-    int b = (state>> 3) & 7;
-    int c = (state>> 6) & 7;
-    int d = (state>> 9) & 7;
-    int e = (state>>12) & 7;
-    int f = (state>>15) & 7;
-    int g = (state>>18) & 7;
-    int h = (state>>21) & 7;
+    int f =  state      & 7;
+    int h = (state>> 3) & 7;
+    int g = (state>> 6) & 7;
+    int e = (state>> 9) & 7;
+    int d = (state>>12) & 7;
+    int c = (state>>15) & 7;
+    int b = (state>>18) & 7;
+    int a = (state>>21) & 7;
     bool result = true;
     // Only checks constraints pertaining to variables that have been assigned values.
     switch (indexOfZero(state)) {
         case -1:
-            result = result && a<=h && g<h && abs(h-c)%2==0 && h!=d && e!=(h-2) && h!=f;
         case 7:
-            result = result && a>g && abs(g-c)==1 && d>=g && g!=f;
         case 6:
-            result = result && abs(f-b)==1 && c!=f && d!=(f-1) && abs(e-f)%2==1;
         case 5:
-            result = result && e!=c && e<(d-1);
         case 4:
-            result = result && d!=c;
+            result = result && (c!=0?d!=c:true);
+        case 3:
+            result = result && (c!=0?e!=c:true) && (d!=0?e<(d-1):true);
+        case 2:
+            result = result && (a!=0?g<a:true) && (c!=0?abs(g-c)==1:true) && (d!=0?g<=d:true) && (f!=0?g!=f:true);
+        case 1:
+            result = result && (a!=0?h>=a:true) && (c!=0?abs(h-c)%2==0:true) && (d!=0?h!=d:true) && (e!=0?h!=e+2:true) && (g!=0?h>g:true);
+        case 0:
+            result = result && (b!=0?abs(f-b)==1:true) && (c!=0?f!=c:true) && (d!=0?f!=d+1:true) && (e!=0?abs(f-e)%2==1:true) && (h!=0?f!=h:true);
             break;
         default:
             return true;
@@ -57,6 +63,34 @@ bool satisfiesConstraints(long int state) {
     return result;
 }
 
+// bool satisfiesConstraints(long int state) {
+//     int a =  state      & 7;
+//     int b = (state>> 3) & 7;
+//     int c = (state>> 6) & 7;
+//     int d = (state>> 9) & 7;
+//     int e = (state>>12) & 7;
+//     int f = (state>>15) & 7;
+//     int g = (state>>18) & 7;
+//     int h = (state>>21) & 7;
+//     bool result = true;
+//     // Only checks constraints pertaining to variables that have been assigned values.
+//     switch (indexOfZero(state)) {
+//         case -1:
+//             result = result && ah>=a && abs(h-c)%2==0 && h!=d && h!=e+2 && h>g;
+//         case 7:
+//             result = result && g<a && abs(g-c)==1 && g<=d && g!=f;
+//         case 6:
+//             result = result && abs(f-b)==1 && f!=c && f!=d+1 && abs(f-e)%2==1 && f!=h;
+//         case 5:
+//             result = result && e!=c && e<(d-1);
+//         case 4:
+//             result = result && d!=c;
+//             break;
+//         default:
+//             return true;
+//     }
+//     return result;
+// }
 /*
  * External logic makes things look better.
  */
@@ -72,7 +106,7 @@ void printState(long int state, bool correct, bool maxLength) {
     if ((!correct || satisfiesConstraints(state)) && (!maxLength || indexOfZero(state)==-1)) {
         for (int i=0; i<24; i+=3) {
             if (((state>>i) & 7) != 0) {
-                cout << char(65+i/3) << "=" << ((state>>i) & 7) << " ";
+                cout << "FHGEDCBA"[i/3] << "=" << ((state>>i) & 7) << " ";
             }
         }
         cout << (satisfiesConstraints(state) ? (indexOfZero(state)==-1 ? "solution" : "") : "failure") << endl;
@@ -87,7 +121,7 @@ int main(int argc, char const *argv[])
      * each representing a variable from H to A.
      */
     // Number of failing branches.
-    int failures = 0;
+    int badWorlds = 0;
     int prunes   = 0;
     // Current search path.
     long int* queue = new long int[8];
@@ -110,7 +144,7 @@ int main(int argc, char const *argv[])
         // Deepens the search if it is not already at max depth 
         // and the current state does not violate constraints.
         currIndex += int( satisfiesConstraints(currState) &&   currIndex < 7);
-        failures  += int(!satisfiesConstraints(currState) && !(currIndex < 7));
+        badWorlds += int(!satisfiesConstraints(currState) && !(currIndex < 7));
         prunes    += int(!satisfiesConstraints(currState) &&   currIndex < 7);
 
         *(queue+currIndex) = successorFunction(currState, currIndex);
@@ -121,7 +155,7 @@ int main(int argc, char const *argv[])
             *(queue+currIndex) = successorFunction(currState, currIndex);
         }
     }
-    cout << failures << " failing worlds found, " << prunes << " branches pruned (" << failures+prunes << " failures)"
+    cout << badWorlds << " failing worlds found, " << prunes << " branches pruned (" << badWorlds+prunes << " failures)"
          << "\n\tof " << pow(4,8) << " possible states." << endl;
 
     delete[] queue;
